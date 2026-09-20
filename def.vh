@@ -21,7 +21,6 @@
 `define NPC_J      4'd1   // {PC[31:28], imm26, 2'b00}
 `define NPC_JR     4'd2   // 寄存器值
 `define NPC_BR     4'd3   // taken ? PC+4+offset<<2 : PC+4
-`define NPC_JR_T   4'd4   // taken ? 寄存器值 : PC+4
 
 // ---- CMPop：cmp 判什么条件（跟指令编号无关，同 ALUop 的思路）----
 // 一根 taken 同时供 npc（跳不跳）和顶层（条件写写不写）使用。
@@ -29,16 +28,13 @@
 `define CMP_NONE   4'd0   // 恒为假
 `define CMP_EQ     4'd1   // a == b
 `define CMP_NE     4'd2   // a != b
-`define CMP_B_Z    4'd3   // b == 0
-`define CMP_B_NZ   4'd4   // b != 0
-`define CMP_A_GEZ  4'd5   // signed(a) >= 0
-`define CMP_A_NE1   4'd6   // a != 1
+`define CMP_B_NZ   4'd3   // b != 0
+`define CMP_A_GEZ  4'd4   // signed(a) >= 0
 
 // ---- A3sel：写哪个寄存器 ----
 `define A3_RT      4'd0   // instr[20:16]
 `define A3_RD      4'd1   // instr[15:11]
 `define A3_31      4'd2   // $31
-`define A3_RS      4'd3   // instr[25:21]
 
 // ---- WDsel：写回 GRF 的值从哪来 ----
 `define WD_ALU     4'd0
@@ -51,7 +47,6 @@
 // 需要把 sa 送进运算的指令。
 `define ALUA_RD1   4'd0
 `define ALUA_SA    4'd1   // 移位量，零扩展到 32 位
-`define ALUA_PC4   4'd2   // PC + 4
 `define ALUB_RD2   4'd0
 `define ALUB_EXT   4'd1   // 扩展后的立即数
 
@@ -62,13 +57,10 @@
 `define ALU_LUI    4'd3   // b << 16
 `define ALU_OR     4'd4
 `define ALU_SLL    4'd5   // b << a[4:0]
-`define ALU_ROR    4'd6   // b 循环右移 a[4:0] 位
-`define ALU_DEC1   4'd7   // y = a - 1
-// 4'd8 ~ 4'd15 留给以后的 and / slt / srl / sra
+// 4'd6 ~ 4'd15 留给以后的 and / slt / srl / sra / 循环移位
 
 // ---- EXTop：16 位立即数怎么补到 32 位 ----
 `define EXT_ZERO   4'd0
 `define EXT_SIGN   4'd1
-`define EXT_SIGN_SH2 4'd2   // {{14{imm16[15]}}, imm16, 2'b00}，偏移按字计
 
 `endif

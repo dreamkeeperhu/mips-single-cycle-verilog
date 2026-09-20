@@ -12,7 +12,6 @@ module ext (
     always @(*) begin
         case (extop)
             `EXT_SIGN: ext32 = {{16{imm16[15]}}, imm16};
-            `EXT_SIGN_SH2: ext32 = {{14{imm16[15]}},imm16,2'b00};
             default:   ext32 = {16'b0, imm16};
         endcase
     end

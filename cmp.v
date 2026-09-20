@@ -23,10 +23,8 @@ module cmp (
         case (cmpop)
             `CMP_EQ:    taken = (a == b);
             `CMP_NE:    taken = (a != b);
-            `CMP_B_Z:   taken = (b == 32'd0);
             `CMP_B_NZ:  taken = (b != 32'd0);
             `CMP_A_GEZ: taken = ~a[31];      // 符号位为 0 即非负
-            `CMP_A_NE1:  taken = (a != 1);
             default:    taken = 1'b0;
         endcase
     end
