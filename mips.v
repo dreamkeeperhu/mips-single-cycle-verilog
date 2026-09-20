@@ -33,7 +33,7 @@ module mips (
 
     // ---- 控制信号 ----
     wire [3:0] NPCop, A3sel, WDsel, ALUop;
-    wire RegWrite, MemWrite, ALUSrc, EXTop, BranchNeg, Movn;
+    wire RegWrite, MemWrite, ALUSrc, EXTop, BranchNeg, Movn, Bgezal;
 
     ctrl u_ctrl (
         .op(op),
@@ -47,15 +47,19 @@ module mips (
         .EXTop(EXTop),
         .BranchNeg(BranchNeg),
         .ALUop(ALUop),
-        .Movn(Movn)
+        .Movn(Movn),
+        .id(rt),
+        .Bgezal(Bgezal)
     );
 
     // ---- 寄存器堆 ----
     wire [31:0] rd1, rd2, wd;
     wire [4:0] a3 = (A3sel == `A3_RD) ? rd : (A3sel == `A3_31) ? 5'd31 : rt;
 
-    // movn 写不写要看数据：ctrl 只说"原则上写不写"，这里跟 rt!=0 合成最终的 we
-    wire we = RegWrite | (Movn & (|rd2));
+    // movn 和 bgezal 写不写都要看数据：ctrl 只说"原则上写不写"，
+    // 这里跟 rt!=0 / rs>=0 合成最终的 we
+    wire rd1Bge0 = ($signed(rd1) >= 0);
+    wire we = RegWrite | (Movn & (|rd2)) | (Bgezal & (rd1Bge0));
 
     grf u_grf (
         .clk(clk),
@@ -116,6 +120,7 @@ module mips (
         .rsval(rd1),
         .npcop(NPCop),
         .taken(taken),
+        .rd1Bge0(rd1Bge0),
         .npc(npc)
     );
 

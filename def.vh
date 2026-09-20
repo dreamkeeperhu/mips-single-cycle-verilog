@@ -17,6 +17,7 @@
 `define NPC_JR     4'd2   // 寄存器值
 `define NPC_BR     4'd3   // 分支：taken ? PC+4+offset<<2 : PC+4
 `define NPC_BEZAL  4'd4
+`define NPC_BEGZAL 4'd5
 
 // ---- A3sel：写哪个寄存器 ----
 `define A3_RT      4'd0   // instr[20:16]

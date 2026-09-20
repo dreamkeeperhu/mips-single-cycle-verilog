@@ -11,6 +11,7 @@
 module ctrl (
     input [5:0] op,
     input [5:0] funct,
+    input [4:0] id,
 
     output [3:0] NPCop,
     output       RegWrite,
@@ -21,7 +22,8 @@ module ctrl (
     output       EXTop,      // 0: 零扩展 1: 符号扩展
     output       BranchNeg,  // beq=0, bne=1；跟 ALU 的 Zero 异或得到 taken
     output [3:0] ALUop,
-    output       Movn
+    output       Movn,
+    output       Bgezal
 );
 
     // ---- 译码：一条指令一行 ----
@@ -46,26 +48,29 @@ module ctrl (
     wire jal = (op == 6'h03);
     wire ori = (op == 6'h0d);
 
+    wire bgezal = (op == 6'h01 && id == 5'h11);
+
 
     // 分类：加新指令时优先往这几类里塞，控制信号就不用动
     wire calc_r = addu | subu;  // 读 rs/rt，写 rd
     wire calc_i = addiu | xori | lui | ori;  // 读 rs，写 rt，第二操作数是立即数
     wire branch = beq | bne;
-    wire link = jal | jalr;  // 要把 PC+4 写进寄存器
+    wire link = jal | jalr ;  // 要把 PC+4 写进寄存器
 
     // ---- 控制信号：一个信号一行 ----
-    assign RegWrite = calc_r | calc_i | lw | link | bezal | sll;
+    assign RegWrite = calc_r | calc_i | lw | link | bezal | sll ;
     assign MemWrite = sw;
     assign ALUSrc = calc_i | lw | sw;
     assign EXTop = addiu | lw | sw;  // 只有这几条要符号扩展
     assign BranchNeg = bne;
     assign Movn = movn;
+    assign Bgezal = bgezal;
 
-    assign A3sel = jal ? `A3_31 : (calc_r | jalr | movn | sll) ? `A3_RD : `A3_RT;
+    assign A3sel = (jal | bgezal) ? `A3_31 : (calc_r | jalr | movn | sll) ? `A3_RD : `A3_RT;
 
-    assign WDsel = link ? `WD_PC4 : lw ? `WD_DM : movn ? `WD_RD1 : sll ? `WD_SLL : `WD_ALU;
+    assign WDsel = (link | bgezal) ? `WD_PC4 : lw ? `WD_DM : movn ? `WD_RD1 : sll ? `WD_SLL : `WD_ALU;
 
-    assign NPCop = (j | jal) ? `NPC_J : (jr | jalr) ? `NPC_JR : branch ? `NPC_BR : bezal ? `NPC_BEZAL :  `NPC_PC4;
+    assign NPCop = (j | jal) ? `NPC_J : (jr | jalr) ? `NPC_JR : branch ? `NPC_BR : bezal ? `NPC_BEZAL : bgezal ? `NPC_BEGZAL:  `NPC_PC4;
 
     assign ALUop     = (subu|branch) ? `ALU_SUB :
                        xori          ? `ALU_XOR :

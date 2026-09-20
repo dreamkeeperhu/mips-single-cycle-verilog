@@ -16,6 +16,7 @@ module npc (
     input      [31:0] rsval,
     input      [ 3:0] npcop,
     input             taken,
+    input             rd1Bge0,
     output reg [31:0] npc
 );
 
@@ -26,6 +27,7 @@ module npc (
             `NPC_JR: npc = rsval;
             `NPC_BR: npc = (taken == 1) ? (pc + 4 + ({{14{imm16[15]}}, imm16, 2'b00})) : (pc + 4);
             `NPC_BEZAL: npc = (taken == 1) ? (rsval) : (pc + 4);
+            `NPC_BEGZAL: npc = (rd1Bge0 == 1) ? (pc+4 + ({{14{imm16[15]}}, imm16, 2'b00})) : (pc+4);
             default: npc = pc + 4;
         endcase
     end
