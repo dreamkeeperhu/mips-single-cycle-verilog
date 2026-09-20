@@ -43,6 +43,7 @@
 `define WD_DM      4'd1
 `define WD_PC4     4'd2
 `define WD_RD1     4'd3
+`define WD_ROR     4'd4
 
 // ---- ALUAsel / ALUBsel：ALU 两个输入口各接哪一路 ----
 // 两个口各有自己的选择器。只给 b 口留选择（老的 ALUSrc）撑不住 sll 这类

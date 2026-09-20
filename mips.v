@@ -70,7 +70,7 @@ module mips (
     // 寄存器和内存各一条通道，形状完全一样。加一条新的条件写指令 =
     // ctrl 里把它或进 CondRegWrite / CondMemWrite、CMPop 选一档，这里不用改。
     wire grf_we = RegWrite | (CondRegWrite & taken);
-    wire dm_we  = MemWrite | (CondMemWrite & taken);
+    wire dm_we = MemWrite | (CondMemWrite & taken);
 
     // ---- 寄存器堆 ----
     wire [4:0] a3 = (A3sel == `A3_RD) ? rd : (A3sel == `A3_31) ? 5'd31 : rt;
@@ -95,8 +95,8 @@ module mips (
         .ext32(ext32)
     );
 
-    wire [31:0] alu_a = (ALUAsel == `ALUA_SA)  ? {27'b0, sa} : rd1;
-    wire [31:0] alu_b = (ALUBsel == `ALUB_EXT) ? ext32       : rd2;
+    wire [31:0] alu_a = (ALUAsel == `ALUA_SA) ? {27'b0, sa} : rd1;
+    wire [31:0] alu_b = (ALUBsel == `ALUB_EXT) ? ext32 : rd2;
     wire [31:0] alu_out;
 
     alu u_alu (
@@ -121,7 +121,8 @@ module mips (
     wire [31:0] pc4 = pc + 32'd4;
     assign wd = (WDsel == `WD_DM)  ? dm_out :
                 (WDsel == `WD_PC4) ? pc4    :
-                (WDsel == `WD_RD1) ? rd1    : alu_out;
+                (WDsel == `WD_RD1) ? rd1    : 
+                (WDsel == `WD_ROR) ? ((rd2 >> rd1[4:0]) | (rd2 << (32-rd1[4:0])) )    : alu_out;
 
     // ---- 下一条 PC ----
     npc u_npc (

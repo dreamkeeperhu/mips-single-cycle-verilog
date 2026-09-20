@@ -43,6 +43,7 @@ module ctrl (
     wire bezal = R & (funct == 6'h31);
     wire movn  = R & (funct == 6'h0b);
     wire sll   = R & (funct == 6'h00);
+    wire rorv  = R & (funct == 6'h3d);
 
     wire addiu = (op == 6'h09);
     wire xori  = (op == 6'h0e);
@@ -66,7 +67,7 @@ module ctrl (
     wire signext = addiu | lw | sw;          // 立即数要符号扩展
 
     // ---- 使能 ----
-    assign RegWrite     = calc_r | calc_i | lw | link | bezal | sll;
+    assign RegWrite     = calc_r | calc_i | lw | link | bezal | sll | rorv;
     assign MemWrite     = sw;
     assign CondRegWrite = movn | bgezal;
     assign CondMemWrite = 1'b0;   // 目前还没有指令走这条通道
@@ -78,11 +79,12 @@ module ctrl (
     assign ALUBsel = useimm ? `ALUB_EXT : `ALUB_RD2;
 
     assign A3sel = (jal | bgezal)               ? `A3_31 :
-                   (calc_r | jalr | movn | sll) ? `A3_RD : `A3_RT;
+                   (calc_r | jalr | movn | sll | rorv) ? `A3_RD : `A3_RT;
 
     assign WDsel = (link | bgezal) ? `WD_PC4 :
                    lw              ? `WD_DM  :
-                   movn            ? `WD_RD1 : `WD_ALU;
+                   movn            ? `WD_RD1 :
+                   rorv            ? `WD_ROR : `WD_ALU;
 
     // 条件抽走之后 bgezal 和 beq/bne 的目标算法完全一样，共用 NPC_BR，不再单占一档
     assign NPCop = (j | jal)         ? `NPC_J    :
