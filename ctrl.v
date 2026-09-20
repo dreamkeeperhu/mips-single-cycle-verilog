@@ -33,6 +33,7 @@ module ctrl (
     wire jalr = R & (funct == 6'h09);
     wire bezal = R & (funct == 6'h31);
     wire movn = R & (funct == 6'h0b);
+    wire sll = R & (funct == 6'h00);
 
     wire addiu = (op == 6'h09);
     wire xori = (op == 6'h0e);
@@ -53,16 +54,16 @@ module ctrl (
     wire link = jal | jalr;  // 要把 PC+4 写进寄存器
 
     // ---- 控制信号：一个信号一行 ----
-    assign RegWrite = calc_r | calc_i | lw | link | bezal ;
+    assign RegWrite = calc_r | calc_i | lw | link | bezal | sll;
     assign MemWrite = sw;
     assign ALUSrc = calc_i | lw | sw;
     assign EXTop = addiu | lw | sw;  // 只有这几条要符号扩展
     assign BranchNeg = bne;
     assign Movn = movn;
 
-    assign A3sel = jal ? `A3_31 : (calc_r | jalr | movn) ? `A3_RD : `A3_RT;
+    assign A3sel = jal ? `A3_31 : (calc_r | jalr | movn | sll) ? `A3_RD : `A3_RT;
 
-    assign WDsel = link ? `WD_PC4 : lw ? `WD_DM : movn ? `WD_RD1 : `WD_ALU;
+    assign WDsel = link ? `WD_PC4 : lw ? `WD_DM : movn ? `WD_RD1 : sll ? `WD_SLL : `WD_ALU;
 
     assign NPCop = (j | jal) ? `NPC_J : (jr | jalr) ? `NPC_JR : branch ? `NPC_BR : bezal ? `NPC_BEZAL :  `NPC_PC4;
 

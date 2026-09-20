@@ -28,6 +28,7 @@
 `define WD_DM      4'd1
 `define WD_PC4     4'd2
 `define WD_RD1     4'd3
+`define WD_SLL     4'd4
 
 // ---- ALUop：ALU 干什么（跟指令编号无关，这是 P3 的教训）----
 `define ALU_ADD    4'd0

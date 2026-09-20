@@ -14,7 +14,7 @@ module tb;
         $finish;
     end
 
-    // 撞到全 0 的指令就收工（ROM 空的地方天然是 0）
+    // 撞到 ROM 空白区的填充字就收工（见 im.v：不能用全 0，那是 nop）
     always @(negedge clk)
-        if (!reset && u_mips.instr === 32'h0) $finish;
+        if (!reset && u_mips.instr === 32'hffffffff) $finish;
 endmodule

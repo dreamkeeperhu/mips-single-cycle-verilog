@@ -8,9 +8,11 @@ module im(
     reg [31:0] mem [0:1023];          // 1024 条指令够用了
 
     initial begin
-        for (i = 0; i < 1024; i = i + 1) mem[i] = 32'b0;   // 先清零，
-        $readmemh("code.hex", mem);                        // 程序之外才是全 0，
-    end                                                    // testbench 靠它判断跑完了
+        // 空白区填 0xffffffff：opcode 0x3f 不是任何合法指令，
+        // 而全 0 不行 —— 那是 nop（= sll $0,$0,0），会把测试台提前掐断
+        for (i = 0; i < 1024; i = i + 1) mem[i] = 32'hffffffff;
+        $readmemh("code.hex", mem);
+    end
 
     assign instr = mem[addr[11:2]];   // 0x3000 的 [11:2] 正好是 0
 endmodule
