@@ -73,7 +73,7 @@ module mips (
     wire dm_we = MemWrite | (CondMemWrite & taken);
 
     // ---- 寄存器堆 ----
-    wire [4:0] a3 = (A3sel == `A3_RD) ? rd : (A3sel == `A3_31) ? 5'd31 : rt;
+    wire [4:0] a3 = (A3sel == `A3_RD) ? rd : (A3sel == `A3_31) ? 5'd31 : (A3sel == `A3_RS) ? rs: rt;
 
     grf u_grf (
         .clk  (clk),
@@ -95,7 +95,7 @@ module mips (
         .ext32(ext32)
     );
     wire [31:0] pc4 = pc + 32'd4;
-    wire [31:0] alu_a = (ALUAsel == `ALUA_SA) ? {27'b0, sa} : (ALUAsel == `ALUA_PC4) ? pc4: rd1;
+    wire [31:0] alu_a = (ALUAsel == `ALUA_SA) ? {27'b0, sa} : (ALUAsel == `ALUA_PC4) ? pc4 : rd1;
     wire [31:0] alu_b = (ALUBsel == `ALUB_EXT) ? ext32 : rd2;
     wire [31:0] alu_out;
 

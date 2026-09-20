@@ -20,13 +20,14 @@ module alu (
 );
     always @(*) begin
         case (aluop)
-            `ALU_SUB: y = a - b;
-            `ALU_LUI: y = b << 16;
-            `ALU_XOR: y = a ^ b;
-            `ALU_OR:  y = a | b;
-            `ALU_SLL: y = b << a[4:0];
-            `ALU_ROR: y = (b>>a[4:0]) | (b<<(32-a[4:0]));
-            default:  y = a + b;
+            `ALU_SUB:  y = a - b;
+            `ALU_LUI:  y = b << 16;
+            `ALU_XOR:  y = a ^ b;
+            `ALU_OR:   y = a | b;
+            `ALU_SLL:  y = b << a[4:0];
+            `ALU_ROR:  y = (b >> a[4:0]) | (b << (32 - a[4:0]));
+            `ALU_DEC1: y = a - 1;
+            default:   y = a + b;
         endcase
     end
 

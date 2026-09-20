@@ -32,11 +32,13 @@
 `define CMP_B_Z    4'd3   // b == 0
 `define CMP_B_NZ   4'd4   // b != 0
 `define CMP_A_GEZ  4'd5   // signed(a) >= 0
+`define CMP_A_NE1   4'd6   // a != 1
 
 // ---- A3sel：写哪个寄存器 ----
 `define A3_RT      4'd0   // instr[20:16]
 `define A3_RD      4'd1   // instr[15:11]
 `define A3_31      4'd2   // $31
+`define A3_RS      4'd3   // instr[25:21]
 
 // ---- WDsel：写回 GRF 的值从哪来 ----
 `define WD_ALU     4'd0
@@ -61,7 +63,8 @@
 `define ALU_OR     4'd4
 `define ALU_SLL    4'd5   // b << a[4:0]
 `define ALU_ROR    4'd6   // b 循环右移 a[4:0] 位
-// 4'd7 ~ 4'd15 留给以后的 and / slt / srl / sra
+`define ALU_DEC1   4'd7   // y = a - 1
+// 4'd8 ~ 4'd15 留给以后的 and / slt / srl / sra
 
 // ---- EXTop：16 位立即数怎么补到 32 位 ----
 `define EXT_ZERO   4'd0
