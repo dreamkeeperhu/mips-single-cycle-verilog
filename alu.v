@@ -25,6 +25,7 @@ module alu (
             `ALU_XOR: y = a ^ b;
             `ALU_OR:  y = a | b;
             `ALU_SLL: y = b << a[4:0];
+            `ALU_ROR: y = (b>>a[4:0]) | (b<<(32-a[4:0]));
             default:  y = a + b;
         endcase
     end

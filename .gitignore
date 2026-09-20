@@ -1,5 +1,7 @@
-# iverilog 编译产物
+# 构建产物
 sim
 a.out
-*.vcd
-*.out
+code.hex
+golden.txt
+mine.txt
+mars_ext/*.class

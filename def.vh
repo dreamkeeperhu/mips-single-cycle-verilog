@@ -43,13 +43,13 @@
 `define WD_DM      4'd1
 `define WD_PC4     4'd2
 `define WD_RD1     4'd3
-`define WD_ROR     4'd4
 
 // ---- ALUAsel / ALUBsel：ALU 两个输入口各接哪一路 ----
 // 两个口各有自己的选择器。只给 b 口留选择（老的 ALUSrc）撑不住 sll 这类
 // 需要把 sa 送进运算的指令。
 `define ALUA_RD1   4'd0
 `define ALUA_SA    4'd1   // 移位量，零扩展到 32 位
+`define ALUA_PC4   4'd2   // PC + 4
 `define ALUB_RD2   4'd0
 `define ALUB_EXT   4'd1   // 扩展后的立即数
 
@@ -60,10 +60,12 @@
 `define ALU_LUI    4'd3   // b << 16
 `define ALU_OR     4'd4
 `define ALU_SLL    4'd5   // b << a[4:0]
-// 4'd6 ~ 4'd15 留给以后的 and / slt / srl / sra
+`define ALU_ROR    4'd6   // b 循环右移 a[4:0] 位
+// 4'd7 ~ 4'd15 留给以后的 and / slt / srl / sra
 
 // ---- EXTop：16 位立即数怎么补到 32 位 ----
 `define EXT_ZERO   4'd0
 `define EXT_SIGN   4'd1
+`define EXT_SIGN_SH2 4'd2   // {{14{imm16[15]}}, imm16, 2'b00}，偏移按字计
 
 `endif

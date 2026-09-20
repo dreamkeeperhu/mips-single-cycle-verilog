@@ -55,36 +55,36 @@ module ctrl (
     wire j     = (op == 6'h02);
     wire jal   = (op == 6'h03);
     wire ori   = (op == 6'h0d);
+    wire apc   = (op == 6'h1e);
 
     wire bgezal = (op == 6'h01) & (rt == 5'h11);
 
     // 分类：加新指令时优先往这几类里塞，控制信号就不用动
-    wire calc_r = addu | subu;               // 读 rs/rt，写 rd
+    wire calc_r = addu | subu | rorv;               // 读 rs/rt，写 rd
     wire calc_i = addiu | xori | lui | ori;  // 读 rs，写 rt，第二操作数是立即数
     wire branch = beq | bne;
     wire link   = jal | jalr;                // 要把 PC+4 写进寄存器
-    wire useimm = calc_i | lw | sw;          // ALU 的 b 口接立即数
-    wire signext = addiu | lw | sw;          // 立即数要符号扩展
+    wire useimm = calc_i | lw | sw | apc;          // ALU 的 b 口接立即数
+    wire signext = addiu | lw | sw ;          // 立即数要符号扩展
 
     // ---- 使能 ----
-    assign RegWrite     = calc_r | calc_i | lw | link | bezal | sll | rorv;
+    assign RegWrite     = calc_r | calc_i | lw | link | bezal | sll | apc;
     assign MemWrite     = sw;
     assign CondRegWrite = movn | bgezal;
     assign CondMemWrite = 1'b0;   // 目前还没有指令走这条通道
 
     // ---- 多路选择 ----
-    assign EXTop   = signext ? `EXT_SIGN : `EXT_ZERO;
+    assign EXTop   = signext ? `EXT_SIGN : apc? `EXT_SIGN_SH2 : `EXT_ZERO;
 
-    assign ALUAsel = sll    ? `ALUA_SA  : `ALUA_RD1;
+    assign ALUAsel = sll    ? `ALUA_SA  : apc ? `ALUA_PC4 : `ALUA_RD1;
     assign ALUBsel = useimm ? `ALUB_EXT : `ALUB_RD2;
 
     assign A3sel = (jal | bgezal)               ? `A3_31 :
-                   (calc_r | jalr | movn | sll | rorv) ? `A3_RD : `A3_RT;
+                   (calc_r | jalr | movn | sll ) ? `A3_RD : `A3_RT;
 
     assign WDsel = (link | bgezal) ? `WD_PC4 :
                    lw              ? `WD_DM  :
-                   movn            ? `WD_RD1 :
-                   rorv            ? `WD_ROR : `WD_ALU;
+                   movn            ? `WD_RD1 : `WD_ALU;
 
     // 条件抽走之后 bgezal 和 beq/bne 的目标算法完全一样，共用 NPC_BR，不再单占一档
     assign NPCop = (j | jal)         ? `NPC_J    :
@@ -103,6 +103,7 @@ module ctrl (
                    xori ? `ALU_XOR :
                    lui  ? `ALU_LUI :
                    ori  ? `ALU_OR  :
-                   sll  ? `ALU_SLL : `ALU_ADD;
+                   sll  ? `ALU_SLL : 
+                   rorv ? `ALU_ROR : `ALU_ADD;
 
 endmodule
