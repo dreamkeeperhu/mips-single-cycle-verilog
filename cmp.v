@@ -10,8 +10,8 @@
 //   2. P5 要求：流水线里分支在 D 级决定，而 ALU 在 E 级，那时结果还没出来。
 //      比较和运算现在就分家，P5 直接把这个模块放进 D 级。
 //
-// 注意 taken 同时服务两件事：npc 用它决定跳不跳，顶层用它决定条件写要不要写。
-// 这两件事在硬件上是同一个判断，没理由算两遍。
+// 注意 taken 同时服务三件事：npc 用它决定跳不跳，顶层用它决定条件写寄存器、
+// 条件写内存要不要写。这几件事在硬件上是同一个判断，没理由算多遍。
 module cmp (
     input      [31:0] a,      // 接 RD1（rs 的值）
     input      [31:0] b,      // 接 RD2（rt 的值）
@@ -21,12 +21,12 @@ module cmp (
 
     always @(*) begin
         case (cmpop)
-            `CMP_EQ:  taken = (a == b);
-            `CMP_NE:  taken = (a != b);
-            `CMP_BZ:  taken = (b == 32'd0);
-            `CMP_BNZ: taken = (b != 32'd0);
-            `CMP_GEZ: taken = ~a[31];      // 符号位为 0 即非负
-            default:  taken = 1'b0;
+            `CMP_EQ:    taken = (a == b);
+            `CMP_NE:    taken = (a != b);
+            `CMP_B_Z:   taken = (b == 32'd0);
+            `CMP_B_NZ:  taken = (b != 32'd0);
+            `CMP_A_GEZ: taken = ~a[31];      // 符号位为 0 即非负
+            default:    taken = 1'b0;
         endcase
     end
 

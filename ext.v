@@ -1,15 +1,18 @@
+`include "def.vh"
+
 // 扩展器：16 位立即数补到 32 位。纯组合。
 //
-// EXTop = 1 符号扩展（addiu / lw / sw：算地址和有符号加法）
-// EXTop = 0 零扩展  （xori：逻辑运算，高位不该被符号污染）
-//
-// 提示：符号扩展在 Verilog 里是 {{16{imm16[15]}}, imm16}
-module ext(
-    input  [15:0] imm16,
-    input         EXTop,
-    output [31:0] ext32
+//   EXT_SIGN  算地址、有符号加法（addiu / lw / sw）
+//   EXT_ZERO  逻辑运算，高位不该被符号污染（xori / ori）
+module ext (
+    input      [15:0] imm16,
+    input      [ 3:0] extop,
+    output reg [31:0] ext32
 );
-    assign ext32 = (EXTop == 0) ? ({{16'b0000000000000000},imm16}) : ({{16{imm16[15]}},imm16});
-    // TODO
-
+    always @(*) begin
+        case (extop)
+            `EXT_SIGN: ext32 = {{16{imm16[15]}}, imm16};
+            default:   ext32 = {16'b0, imm16};
+        endcase
+    end
 endmodule

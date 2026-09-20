@@ -24,7 +24,7 @@ module npc (
             `NPC_J: npc = {pc[31:28], imm26, 2'b00};
             `NPC_JR: npc = rsval;
             `NPC_BR: npc = (taken == 1) ? (pc + 4 + ({{14{imm16[15]}}, imm16, 2'b00})) : (pc + 4);
-            `NPC_BEZAL: npc = (taken == 1) ? (rsval) : (pc + 4);
+            `NPC_JR_T: npc = (taken == 1) ? (rsval) : (pc + 4);
             default: npc = pc + 4;
         endcase
     end
