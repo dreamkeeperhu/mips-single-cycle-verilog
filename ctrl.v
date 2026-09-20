@@ -12,15 +12,16 @@ module ctrl (
     input [5:0] op,
     input [5:0] funct,
 
-    output [2:0] NPCop,
+    output [3:0] NPCop,
     output       RegWrite,
-    output [1:0] A3sel,
-    output [1:0] WDsel,
+    output [3:0] A3sel,
+    output [3:0] WDsel,
     output       MemWrite,
     output       ALUSrc,     // 0: RD2   1: 扩展后的立即数
     output       EXTop,      // 0: 零扩展 1: 符号扩展
     output       BranchNeg,  // beq=0, bne=1；跟 ALU 的 Zero 异或得到 taken
-    output [2:0] ALUop
+    output [3:0] ALUop,
+    output       Movn
 );
 
     // ---- 译码：一条指令一行 ----
@@ -31,6 +32,7 @@ module ctrl (
     wire jr = R & (funct == 6'h08);
     wire jalr = R & (funct == 6'h09);
     wire bezal = R & (funct == 6'h31);
+    wire movn = R & (funct == 6'h0b);
 
     wire addiu = (op == 6'h09);
     wire xori = (op == 6'h0e);
@@ -56,12 +58,13 @@ module ctrl (
     assign ALUSrc = calc_i | lw | sw;
     assign EXTop = addiu | lw | sw;  // 只有这几条要符号扩展
     assign BranchNeg = bne;
+    assign Movn = movn;
 
-    assign A3sel = jal ? `A3_31 : (calc_r | jalr) ? `A3_RD : ?  `A3_RT;
+    assign A3sel = jal ? `A3_31 : (calc_r | jalr | movn) ? `A3_RD : `A3_RT;
 
-    assign WDsel = link ? `WD_PC4 : lw ? `WD_DM : `WD_ALU;
+    assign WDsel = link ? `WD_PC4 : lw ? `WD_DM : movn ? `WD_RD1 : `WD_ALU;
 
-    assign NPCop = (j | jal) ? `NPC_J : (jr | jalr) ? `NPC_JR : branch ? `NPC_BR : ? bezal ? `NPC_BEZAL :  `NPC_PC4;
+    assign NPCop = (j | jal) ? `NPC_J : (jr | jalr) ? `NPC_JR : branch ? `NPC_BR : bezal ? `NPC_BEZAL :  `NPC_PC4;
 
     assign ALUop     = (subu|branch) ? `ALU_SUB :
                        xori          ? `ALU_XOR :

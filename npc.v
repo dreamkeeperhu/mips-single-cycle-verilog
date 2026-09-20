@@ -14,7 +14,7 @@ module npc (
     input      [15:0] imm16,
     input      [25:0] imm26,
     input      [31:0] rsval,
-    input      [ 2:0] npcop,
+    input      [ 3:0] npcop,
     input             taken,
     output reg [31:0] npc
 );

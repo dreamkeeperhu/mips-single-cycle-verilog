@@ -13,7 +13,7 @@
 module alu (
     input      [31:0] a,
     input      [31:0] b,
-    input      [ 2:0] aluop,
+    input      [ 3:0] aluop,
     output reg [31:0] y,
     output            zero
 );

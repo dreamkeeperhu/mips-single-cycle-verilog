@@ -23,16 +23,15 @@ module mips(
     wire [25:0] imm26 = instr[25:0];
 
     // ---- 控制信号 ----
-    wire [1:0] NPCop, A3sel;
-    wire [2:0] WDsel;
-    wire [2:0] ALUop;
-    wire RegWrite, MemWrite, ALUSrc, EXTop, BranchNeg;
+    wire [3:0] NPCop, A3sel, WDsel, ALUop;
+    wire RegWrite, MemWrite, ALUSrc, EXTop, BranchNeg, Movn;
 
     ctrl u_ctrl(
         .op(op), .funct(funct),
         .NPCop(NPCop), .RegWrite(RegWrite), .A3sel(A3sel),
         .WDsel(WDsel), .MemWrite(MemWrite), .ALUSrc(ALUSrc),
-        .EXTop(EXTop), .BranchNeg(BranchNeg), .ALUop(ALUop)
+        .EXTop(EXTop), .BranchNeg(BranchNeg), .ALUop(ALUop),
+        .Movn(Movn)
     );
 
     // ---- 寄存器堆 ----
@@ -40,8 +39,11 @@ module mips(
     wire [4:0]  a3 = (A3sel == `A3_RD) ? rd :
                      (A3sel == `A3_31) ? 5'd31 : rt;
 
+    // movn 写不写要看数据：ctrl 只说"原则上写不写"，这里跟 rt!=0 合成最终的 we
+    wire we = RegWrite | (Movn & (|rd2));
+
     grf u_grf(
-        .clk(clk), .reset(reset), .we(RegWrite),
+        .clk(clk), .reset(reset), .we(we),
         .a1(rs), .a2(rt), .a3(a3), .wd(wd),
         .rd1(rd1), .rd2(rd2)
     );
@@ -79,7 +81,7 @@ module mips(
     // ---- 写事件日志：格式跟评测机 / MARS 的 lg 输出一致 ----
     always @(posedge clk) begin
         if (!reset) begin
-            if (RegWrite)      // 写 $0 也要记录：动作发生了，只是 GRF 不真的写进去
+            if (we)            // 写 $0 也要记录：动作发生了，只是 GRF 不真的写进去
                 $display("@%h: $%2d <= %h", pc, a3, wd);
             if (MemWrite)
                 $display("@%h: *%h <= %h", pc, {alu_out[31:2], 2'b00}, rd2);
