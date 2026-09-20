@@ -8,16 +8,14 @@
 //   ALU_XOR  y = a ^ b
 //   ALU_LUI  y = b << 16
 //
-// zero：y == 0。beq/bne 靠它判断 rs 和 rt 是否相等
-//       （因为 rs-rt==0 等价于 rs==rt）。
+// 这里没有 zero 输出：分支条件由 cmp 模块负责，ALU 只管算数。
+// 职责分开的理由见 cmp.v。
 module alu (
     input      [31:0] a,
     input      [31:0] b,
     input      [ 3:0] aluop,
-    output reg [31:0] y,
-    output            zero
+    output reg [31:0] y
 );
-    assign zero = (y == 0) ? 1 : 0;
     always @(*) begin
         case (aluop)
             `ALU_SUB: y = a - b;
@@ -28,9 +26,5 @@ module alu (
             default:  y = a + b;
         endcase
     end
-
-    // TODO: always @(*) case (aluop) ... default: 一定要写，否则会推出锁存器
-
-    // TODO: assign zero = ...
 
 endmodule

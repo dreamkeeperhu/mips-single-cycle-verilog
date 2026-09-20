@@ -20,10 +20,9 @@ module ctrl (
     output       MemWrite,
     output       ALUSrc,     // 0: RD2   1: 扩展后的立即数
     output       EXTop,      // 0: 零扩展 1: 符号扩展
-    output       BranchNeg,  // beq=0, bne=1；跟 ALU 的 Zero 异或得到 taken
     output [3:0] ALUop,
-    output       Movn,
-    output       Bgezal
+    output [3:0] CMPop,      // 给 cmp 模块：这条指令要判什么条件
+    output       CondWrite   // 1: 这条指令写不写寄存器，由 cmp 吐出的 taken 决定
 );
 
     // ---- 译码：一条指令一行 ----
@@ -62,20 +61,28 @@ module ctrl (
     assign MemWrite = sw;
     assign ALUSrc = calc_i | lw | sw;
     assign EXTop = addiu | lw | sw;  // 只有这几条要符号扩展
-    assign BranchNeg = bne;
-    assign Movn = movn;
-    assign Bgezal = bgezal;
+    assign CondWrite = movn | bgezal;  // 条件写：写不写要看 taken
 
     assign A3sel = (jal | bgezal) ? `A3_31 : (calc_r | jalr | movn | sll) ? `A3_RD : `A3_RT;
 
     assign WDsel = (link | bgezal) ? `WD_PC4 : lw ? `WD_DM : movn ? `WD_RD1 : sll ? `WD_SLL : `WD_ALU;
 
-    assign NPCop = (j | jal) ? `NPC_J : (jr | jalr) ? `NPC_JR : branch ? `NPC_BR : bezal ? `NPC_BEZAL : bgezal ? `NPC_BEGZAL:  `NPC_PC4;
+    // 条件抽走之后 bgezal 和 beq/bne 的目标算法完全一样，共用 NPC_BR，不再单占一档
+    assign NPCop = (j | jal)          ? `NPC_J   :
+                   (jr | jalr)        ? `NPC_JR  :
+                   (branch | bgezal)  ? `NPC_BR  :
+                   bezal              ? `NPC_BEZAL : `NPC_PC4;
 
-    assign ALUop     = (subu|branch) ? `ALU_SUB :
-                       xori          ? `ALU_XOR :
-                       lui           ? `ALU_LUI : 
-                       ori           ? `ALU_OR  : 
-                       bezal         ? `ALU_B   :`ALU_ADD;
+    // 条件判断交给 cmp 之后，beq/bne/bezal 不再借 ALU 算 zero，ALU 只管算数
+    assign CMPop = beq    ? `CMP_EQ  :
+                   bne    ? `CMP_NE  :
+                   bezal  ? `CMP_BZ  :   // rt == 0
+                   movn   ? `CMP_BNZ :   // rt != 0
+                   bgezal ? `CMP_GEZ : `CMP_NONE;
+
+    assign ALUop = subu ? `ALU_SUB :
+                   xori ? `ALU_XOR :
+                   lui  ? `ALU_LUI :
+                   ori  ? `ALU_OR  : `ALU_ADD;
 
 endmodule

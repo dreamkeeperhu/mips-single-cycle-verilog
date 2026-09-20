@@ -17,7 +17,15 @@
 `define NPC_JR     4'd2   // 寄存器值
 `define NPC_BR     4'd3   // 分支：taken ? PC+4+offset<<2 : PC+4
 `define NPC_BEZAL  4'd4
-`define NPC_BEGZAL 4'd5
+
+// ---- CMPop：cmp 模块判什么条件（跟指令编号无关，同 ALUop 的思路）----
+// 一根 taken 同时供 npc（跳不跳）和 grf 的 we（条件写写不写）使用。
+`define CMP_NONE   4'd0   // 恒为假
+`define CMP_EQ     4'd1   // a == b
+`define CMP_NE     4'd2   // a != b
+`define CMP_BZ     4'd3   // b == 0
+`define CMP_BNZ    4'd4   // b != 0
+`define CMP_GEZ    4'd5   // signed(a) >= 0
 
 // ---- A3sel：写哪个寄存器 ----
 `define A3_RT      4'd0   // instr[20:16]

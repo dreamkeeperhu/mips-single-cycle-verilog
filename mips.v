@@ -32,8 +32,8 @@ module mips (
     wire [25:0] imm26 = instr[25:0];
 
     // ---- 控制信号 ----
-    wire [3:0] NPCop, A3sel, WDsel, ALUop;
-    wire RegWrite, MemWrite, ALUSrc, EXTop, BranchNeg, Movn, Bgezal;
+    wire [3:0] NPCop, A3sel, WDsel, ALUop, CMPop;
+    wire RegWrite, MemWrite, ALUSrc, EXTop, CondWrite;
 
     ctrl u_ctrl (
         .op(op),
@@ -45,21 +45,28 @@ module mips (
         .MemWrite(MemWrite),
         .ALUSrc(ALUSrc),
         .EXTop(EXTop),
-        .BranchNeg(BranchNeg),
         .ALUop(ALUop),
-        .Movn(Movn),
-        .id(rt),
-        .Bgezal(Bgezal)
+        .CMPop(CMPop),
+        .CondWrite(CondWrite),
+        .id(rt)
     );
 
     // ---- 寄存器堆 ----
     wire [31:0] rd1, rd2, wd;
     wire [4:0] a3 = (A3sel == `A3_RD) ? rd : (A3sel == `A3_31) ? 5'd31 : rt;
 
-    // movn 和 bgezal 写不写都要看数据：ctrl 只说"原则上写不写"，
-    // 这里跟 rt!=0 / rs>=0 合成最终的 we
-    wire rd1Bge0 = ($signed(rd1) >= 0);
-    wire we = RegWrite | (Movn & (|rd2)) | (Bgezal & (rd1Bge0));
+    // ---- 比较器：所有"跳不跳 / 写不写"的条件都在这里判，只出一根 taken ----
+    wire taken;
+    cmp u_cmp (
+        .a(rd1),
+        .b(rd2),
+        .cmpop(CMPop),
+        .taken(taken)
+    );
+
+    // 条件写：ctrl 说"这条指令写不写要看条件"，条件由 cmp 给。
+    // 加一条新的条件写指令 = ctrl 里 CondWrite 或上它、CMPop 选一档，这里不用改。
+    wire we = RegWrite | (CondWrite & taken);
 
     grf u_grf (
         .clk(clk),
@@ -83,14 +90,12 @@ module mips (
 
     wire [31:0] alu_b = ALUSrc ? ext32 : rd2;
     wire [31:0] alu_out;
-    wire        zero;
 
     alu u_alu (
         .a(rd1),
         .b(alu_b),
         .aluop(ALUop),
-        .y(alu_out),
-        .zero(zero)
+        .y(alu_out)
     );
 
     // ---- 数据存储器 ----
@@ -112,7 +117,6 @@ module mips (
                 (WDsel == `WD_SLL)  ? (rd2 << sa): alu_out;
 
     // ---- 下一条 PC ----
-    wire taken = zero ^ BranchNeg;  // beq: zero；bne: ~zero
     npc u_npc (
         .pc(pc),
         .imm16(imm16),
@@ -120,7 +124,6 @@ module mips (
         .rsval(rd1),
         .npcop(NPCop),
         .taken(taken),
-        .rd1Bge0(rd1Bge0),
         .npc(npc)
     );
 

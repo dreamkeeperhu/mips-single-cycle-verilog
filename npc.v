@@ -15,19 +15,16 @@ module npc (
     input      [25:0] imm26,
     input      [31:0] rsval,
     input      [ 3:0] npcop,
-    input             taken,
-    input             rd1Bge0,
+    input             taken,     // 唯一的条件输入，来自 cmp
     output reg [31:0] npc
 );
 
-    // TODO: always @(*) case (npcop) ... default: npc = pc + 32'd4;
     always @(*) begin
         case (npcop)
             `NPC_J: npc = {pc[31:28], imm26, 2'b00};
             `NPC_JR: npc = rsval;
             `NPC_BR: npc = (taken == 1) ? (pc + 4 + ({{14{imm16[15]}}, imm16, 2'b00})) : (pc + 4);
             `NPC_BEZAL: npc = (taken == 1) ? (rsval) : (pc + 4);
-            `NPC_BEGZAL: npc = (rd1Bge0 == 1) ? (pc+4 + ({{14{imm16[15]}}, imm16, 2'b00})) : (pc+4);
             default: npc = pc + 4;
         endcase
     end
