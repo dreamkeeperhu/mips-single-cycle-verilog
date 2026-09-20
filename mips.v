@@ -33,7 +33,7 @@ module mips (
 
     // ---- 控制信号 ----
     wire [3:0] NPCop, A3sel, WDsel, ALUop, CMPop;
-    wire RegWrite, MemWrite, ALUSrc, EXTop, CondWrite;
+    wire RegWrite, MemWrite, ALUSrc, EXTop, CondRegWrite, CondMemWrite;
 
     ctrl u_ctrl (
         .op(op),
@@ -47,7 +47,8 @@ module mips (
         .EXTop(EXTop),
         .ALUop(ALUop),
         .CMPop(CMPop),
-        .CondWrite(CondWrite),
+        .CondRegWrite(CondRegWrite),
+        .CondMemWrite(CondMemWrite),
         .id(rt)
     );
 
@@ -65,8 +66,10 @@ module mips (
     );
 
     // 条件写：ctrl 说"这条指令写不写要看条件"，条件由 cmp 给。
-    // 加一条新的条件写指令 = ctrl 里 CondWrite 或上它、CMPop 选一档，这里不用改。
-    wire we = RegWrite | (CondWrite & taken);
+    // 寄存器和内存各一条通道，形状完全一样。加一条新的条件写指令 =
+    // ctrl 里把它或进 CondRegWrite / CondMemWrite、CMPop 选一档，这里不用改。
+    wire we    = RegWrite | (CondRegWrite & taken);
+    wire dm_we = MemWrite | (CondMemWrite & taken);
 
     grf u_grf (
         .clk(clk),
@@ -103,7 +106,7 @@ module mips (
     dm u_dm (
         .clk(clk),
         .reset(reset),
-        .we(MemWrite),
+        .we(dm_we),
         .addr(alu_out),
         .wd(rd2),
         .rd(dm_out)
@@ -132,7 +135,7 @@ module mips (
         if (!reset) begin
             if (we)  // 写 $0 也要记录：动作发生了，只是 GRF 不真的写进去
                 $display("@%h: $%2d <= %h", pc, a3, wd);
-            if (MemWrite) $display("@%h: *%h <= %h", pc, {alu_out[31:2], 2'b00}, rd2);
+            if (dm_we) $display("@%h: *%h <= %h", pc, {alu_out[31:2], 2'b00}, rd2);
         end
     end
 

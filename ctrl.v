@@ -21,8 +21,10 @@ module ctrl (
     output       ALUSrc,     // 0: RD2   1: 扩展后的立即数
     output       EXTop,      // 0: 零扩展 1: 符号扩展
     output [3:0] ALUop,
-    output [3:0] CMPop,      // 给 cmp 模块：这条指令要判什么条件
-    output       CondWrite   // 1: 这条指令写不写寄存器，由 cmp 吐出的 taken 决定
+    output [3:0] CMPop,        // 给 cmp 模块：这条指令要判什么条件
+    // 条件写的两条通道：这条指令"写不写"由 cmp 吐出的 taken 决定
+    output       CondRegWrite, // 1: 写不写寄存器看 taken
+    output       CondMemWrite  // 1: 写不写内存看 taken
 );
 
     // ---- 译码：一条指令一行 ----
@@ -61,7 +63,8 @@ module ctrl (
     assign MemWrite = sw;
     assign ALUSrc = calc_i | lw | sw;
     assign EXTop = addiu | lw | sw;  // 只有这几条要符号扩展
-    assign CondWrite = movn | bgezal;  // 条件写：写不写要看 taken
+    assign CondRegWrite = movn | bgezal;  // 条件写寄存器：写不写要看 taken
+    assign CondMemWrite = 1'b0;           // 条件写内存：目前还没有指令走这条通道
 
     assign A3sel = (jal | bgezal) ? `A3_31 : (calc_r | jalr | movn | sll) ? `A3_RD : `A3_RT;
 
